@@ -4,8 +4,10 @@ import android.os.Bundle
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.isVisible
+import androidx.lifecycle.lifecycleScope
 import com.myhome.android.coroutinestart.databinding.ActivityMainBinding
-import kotlin.concurrent.thread
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
 class MainActivity : AppCompatActivity() {
 
@@ -17,35 +19,31 @@ class MainActivity : AppCompatActivity() {
         setContentView(binding.root)
 
         binding.buttonLoad.setOnClickListener {
-            loadDate()
-        }
-    }
-
-    private fun loadDate() {
-        binding.pbLoading.isVisible = true
-        binding.buttonLoad.isEnabled = false
-        loadCity { city ->
-            binding.tvCity.text = city
-            loadTemp(city) { temp ->
-                binding.tvTemp.text = temp.toString()
-                binding.pbLoading.isVisible = false
-                binding.buttonLoad.isEnabled = true
+            lifecycleScope.launch {
+                loadData()
             }
         }
     }
 
-    private fun loadTemp(city: String, callback: (Int) -> Unit) {
-        thread {
-            Toast.makeText(this, "Loading temperature for $city", Toast.LENGTH_SHORT).show()
-            Thread.sleep(5000)
-            callback.invoke(17)
-        }
+    private suspend fun loadData() {
+        binding.pbLoading.isVisible = true
+        binding.buttonLoad.isEnabled = false
+        val city = loadCity()
+        binding.tvCity.text = city
+        val temp = loadTemp(city)
+        binding.tvTemp.text = temp.toString()
+        binding.pbLoading.isVisible = false
+        binding.buttonLoad.isEnabled = true
     }
 
-    private fun loadCity(callback: (String) -> Unit) {
-        thread {
-            Thread.sleep(5000)
-            callback.invoke("Moscow")
-        }
+    private suspend fun loadTemp(city: String): Int {
+        Toast.makeText(this, "Loading temperature for $city", Toast.LENGTH_SHORT).show()
+        delay(5000)
+        return 17
+    }
+
+    private suspend fun loadCity(): String {
+        delay(5000)
+        return "Moscow"
     }
 }
